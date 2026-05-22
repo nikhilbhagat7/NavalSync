@@ -1,15 +1,14 @@
-import { createBoard, randomPlaceShips, attack, ships, isGameOver } from "./components/board";
+// import { attack, isGameOver } from "./game/attack";
+// import createBoard from "./game/board";
+// import randomPlaceShips from "./game/placement";
+// import ships from "./game/ships";
+import createGame from "./game/gameManager";
 import printBoard from "./utils/printer";
-
 
 function App() {
 
-  const board = createBoard(10);
-  randomPlaceShips(board);
-  printBoard(board);
-  console.log(
-    isGameOver(ships)
-  );
+  const game = createGame();
+
 
   return (
     <div style={{
