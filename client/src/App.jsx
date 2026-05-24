@@ -2,13 +2,14 @@
 // import createBoard from "./game/board";
 // import randomPlaceShips from "./game/placement";
 // import ships from "./game/ships";
+// import printBoard from "./utils/printer"; 
 import createGame from "./game/gameManager";
-import printBoard from "./utils/printer"; 
+import GameScreen from "./components/GameScreen"
 import { useState } from 'react';
 
 function App() {
 
-  const [game,setGame] = useState(createGame());
+  const [game] = useState(() => createGame());
   console.log(game.player1.board);
 
   //temp funct just for noww
@@ -20,36 +21,40 @@ function App() {
 
   const tableStyle = {
     display: "inline-block",
-    width: "30px",
-    height: "30px",
+    width: "30px", height: "30px",
     border: "1px solid black",
-    textAlign: "center",
+    textAlign: "center", 
     lineHeight: "30px"
   };
 
+  const [, forceRender] = useState(0);
   const [lastResult, setLastResult] = useState("");
-  const handleAttack = (row, col) => {
-    console.log(game.status);
+  const handleAttack = (row, col, boardClicked) => {
+    console.log(`BEFORE : ${game.status}`)
+    if (game.winner) return;
+    if (game.currentTurn === "player1" && boardClicked !== "opponent") return;
+    if (game.currentTurn === "player2" && boardClicked !== "player") return;
+
     const result = game.playTurn(row, col);
-    console.log("Result:", result);
-    console.log("After:", game.status);
+    if (result === "already attacked") return;
+
     setLastResult(result);
-    setGame({...game});
+    forceRender(n => n + 1); // just triggers re-render
+    // ^ edge case like: "hit" followed by another "hit" where setLastResult(result) the second time does nothing
+    console.log(`AFTER : ${game.status}`)
   }
 
+  // return <GameScreen />;
 
   return (
     <div>
       <h2>Current Turn: {game.currentTurn}</h2>
-
       <h2>Status: {game.status}</h2>
-
       <h2>
         Winner: {game.winner ? game.winner : "none"}
       </h2>
-
       <h2>Last Move: {lastResult || "none"}</h2>
-      
+
       <h1>OPPONENT BOARD</h1>
       {game.player2.board.map((row, rowIndex) => (
         <div key={rowIndex}>
@@ -62,8 +67,8 @@ function App() {
                   elem==="X" ? "red" :
                   elem==="O" ? "lightblue" :
                   elem==="~" ? "lightgrey" :
-                  "lightgrey"}}
-                onClick={() => {handleAttack(rowIndex,colIndex)}}>
+                  "red"}}
+                  onClick={() => handleAttack(rowIndex, colIndex, "opponent")}>
                 {displayCell(elem,true)}
               </span>
           ))}
@@ -84,12 +89,21 @@ function App() {
                 elem==="~" ? "lightgrey" :
                 "lightgreen"
               }}
-              onClick={() => {handleAttack(rowIndex,colIndex)}}>
+              onClick={() => handleAttack(rowIndex, colIndex, "player")}>
               {displayCell(elem,false)}
               </span>
           ))}
         </div>
       ))}
+
+      {game.winner && (
+        <h1 style={{
+          color:"red",
+          fontSize:"40px"
+        }}>
+          GAME OVER — {game.winner} WINS
+        </h1>
+      )}
 
     </div>
   );

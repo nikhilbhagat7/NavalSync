@@ -42,12 +42,13 @@ const createGame = () => {
         game.player2.ships
       );
 
+      if(result==="already attacked") return result;
+      
       if (isGameOver(game.player2.ships)) {
         game.winner = "player1";
         game.status = "game over";
         return result;
       }
-      if(result==="already attacked") return result;
 
       game.currentTurn = "player2";
       game.status = "waiting for player2 move"; 
@@ -87,6 +88,8 @@ const createGame = () => {
       else
         return game.opponentAttack(row,col);
     }
+    console.log("Winner:", game.winner);
+    console.log("Status:", game.status);
   return game;
 
 };
