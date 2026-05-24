@@ -1,8 +1,9 @@
-const StatusBar = () => {
+const StatusBar = ( {turn, status, winner} ) => {
   return (
     <section>
-      <h3>TURN : PLAYER1</h3>
-      <p>Status : Waiting...</p>
+      <h3>Turn : {turn}</h3>
+      {status==="game over" ? <h2>GAME OVER!</h2> : <h3>Status : {status}</h3>}
+      {winner ? <h1>Winner: {winner}</h1> : null}
     </section>
   )
 };

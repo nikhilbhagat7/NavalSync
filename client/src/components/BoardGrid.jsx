@@ -1,4 +1,4 @@
-const BoardGrid = ({ title, board}) => {
+const BoardGrid = ({ title, board, onCellClick}) => {
 
   // const cellStyle = (cell) => {
   //   background:
@@ -14,6 +14,7 @@ const BoardGrid = ({ title, board}) => {
           <div id={rowIndex}>
             {row.map((elem, colIndex) => (
               <span 
+              onClick = {() => onCellClick(rowIndex, colIndex)}
               key={colIndex}
               style={{
                 border:"1px solid white",
