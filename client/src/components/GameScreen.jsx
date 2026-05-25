@@ -17,15 +17,39 @@ const GameScreen = () => {
     console.log(`BEFORE : ${game.status}`)
     if (game.winner) return;
     if (game.currentTurn === "player1" && boardClicked !== "opponent") return;
-    if (game.currentTurn === "player2" && boardClicked !== "player") return;
+    if (game.currentTurn === "player2") return; 
+    // if (game.currentTurn === "player2" && boardClicked !== "player") return; //for Player vs Player
 
     const result = game.playTurn(row, col);
-    if (result === "already attacked") return;
+    if(result === "already attacked") return;
+
+    //// Player vs Dumb Bot :( jsut for now
+    if (!game.winner && game.currentTurn === "player2") 
+    {
+      setTimeout(() => {
+        botAttack(row, col);
+      }, 500);
+    }
 
     forceRender(n => n + 1); // just triggers re-render
-    // ^ edge case like: "hit" followed by another "hit" where setLastResult(result) the second time does nothing
+    // ^ edge case like: "hit" followed by another "hit" where setLastResult(result) the second time does nothing as react renders when state changes not to any change in variables
     console.log(`AFTER : ${game.status}`)
   };
+
+  //basic bot to play agiant player
+  const botAttack = (row, col) => {
+    if (game.winner) return;
+
+    let result = "already attacked";
+    while(result === "already attacked"){
+      const row = Math.floor(Math.random() * 10);
+      const col = Math.floor(Math.random() * 10);
+      result = game.playTurn(row, col);
+    }
+
+    forceRender(n => n+1);// just triggers re-render
+    console.log(`BOT MAKES MOVE`);
+  }
 
   return(
     <>
@@ -45,11 +69,13 @@ const GameScreen = () => {
             title="OPPONENT BOARD - P1" 
             board={opponentBoard} 
             onCellClick={(row,col)=>handleAttack(row,col,"opponent")}
+            isOpponentBoard={true}
           />
           <BoardGrid 
             title="PLAYER BOARD - P2" 
             board={playerBoard} 
-            onCellClick={(row,col)=>handleAttack(row,col,"player")}
+            onCellClick={(row,col)=>handleAttack(row,col,"player")}    // no bot
+            isOpponentBoard={false}
           />
         </div>
         <ChatPanel />
