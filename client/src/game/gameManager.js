@@ -1,7 +1,7 @@
-import createBoard from "./board";
-import randomPlaceShips from "./placement";
-import ships from "./ships";
-import {attack, isGameOver} from "./attack";
+import createBoard from "./board.js";
+import randomPlaceShips from "./placement.js";
+import ships from "./ships.js";
+import {attack, isGameOver} from "./attack.js";
 
 // Turn Controller
 const createGame = () => {

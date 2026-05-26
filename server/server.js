@@ -1,7 +1,7 @@
 const express  = require("express");
+const createGame = require("../client/src/game/gameManager.js").default;
 
 const app = express();
-
 const PORT = 3000;
 
 //server memory to store game data
@@ -40,12 +40,22 @@ app.post("/create-room", (req,res) => {
   const roomId = generateRoomId();
   rooms[roomId] = {
     players:[],
-    createdAt_ms: Date.now() // track the time of creation
+    createdAt_ms: Date.now(),// track the time of creation
+    game: createGame()
   };
   res.json({
-    message:"room created, check at /rooms"
+    message:`room (${roomId}) created, check at /rooms`
   })
 });
+//temp debugging
+app.get("/room/:roomId/status", (req,res) =>{
+  const roomId = req.params.roomId;
+  if(!rooms[roomId])
+    return res.status(404).json({
+      error:"room not found!"
+    });
+  res.json(rooms[roomId].game.status);
+})
 
 //join room
 app.post("/join-room", (req,res) => {
