@@ -6,6 +6,7 @@
 import createGame from "./game/gameManager";
 import GameScreen from "./components/GameScreen"
 import { useState } from 'react';
+import './App.css'
 
 function App() {
   return <GameScreen/>;

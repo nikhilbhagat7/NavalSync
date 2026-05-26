@@ -30,9 +30,9 @@ const BoardGrid = ({ title, board, onCellClick, isOpponentBoard}) => {
                   textAlign:"center",
                   background:
                     displayValue === "X" ? "rgb(255, 81, 46)" :
-                    displayValue === "O" ? "gray" :
+                    displayValue === "O" ? "#2f8bdc" :
                     displayValue === "~" ? "#3846e2" :
-                    displayValue === "?" ? "#abeaf5" :
+                    displayValue === "?" ? "#c0bd26" :
                     "green"
                 }}>
                   {displayValue}
