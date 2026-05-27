@@ -5,11 +5,28 @@
 // import printBoard from "./utils/printer"; 
 import createGame from "./game/gameManager";
 import GameScreen from "./components/GameScreen"
-import { useState } from 'react';
-import './App.css'
+import './App.css';
+import socket from "./socket";
+import { useEffect } from "react";
 
 function App() {
-  return <GameScreen/>;
+
+  useEffect(() => {
+    socket.on("connect", () => {
+      console.log(`client ${socket.id} connected to server`);
+    });
+    //send res
+    socket.emit("hello-server", {
+      user: "Nikhil",
+      text: "hi backend"
+    });
+    //rec res
+    socket.on("welcome-client", (data) => {
+      console.log("backend replied:", data);
+    });
+  }, []);
+
+  return <GameScreen/>; 
 }
 
 export default App;

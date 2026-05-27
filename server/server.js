@@ -1,8 +1,36 @@
 const express  = require("express");
 const createGame = require("../client/src/game/gameManager.js").default;
+const http = require("http");
+const {Server} = require("socket.io");
 
 const app = express();
 const PORT = 3000;
+
+const server = http.createServer(app);
+const io = new Server(server, {
+  cors: {
+    origin: "http://localhost:5173",
+    methods: ["GET","POST"]
+  }
+});
+
+io.on("connection", (socket) => {
+  // on connection
+  console.log("New socket connected : ", socket.id);
+  // when disconenct
+  socket.on("disconnect", ()=>{
+    console.log("socket disconnected:", socket.id);
+  });
+  // receive data from frontend
+  socket.on("hello-server", (data) => {
+    console.log("hello from frontend:", data);
+
+    socket.emit("welcome-client", {
+      message: "hello from backend"
+    })
+  })
+
+});
 
 //server memory to store game data
 const rooms = {}; //not react state actually
@@ -93,6 +121,6 @@ app.get("/health", (req,res) => {
   });
 });
 
-app.listen(PORT, () => {
+server.listen(PORT, () => {
   console.log(`server runs on port ${PORT}`);
 });
