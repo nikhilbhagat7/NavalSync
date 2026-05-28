@@ -4,6 +4,7 @@ import BoardGrid from "./BoardGrid";
 import ChatPanel from "./ChatPanel";
 import createGame from "../game/gameManager";
 import { useState } from "react";
+import socket from "../socket";
 
 const GameScreen = () => {
 
@@ -20,18 +21,19 @@ const GameScreen = () => {
     if (game.currentTurn === "player2") return; 
     // if (game.currentTurn === "player2" && boardClicked !== "player") return; //for Player vs Player
 
-    const result = game.playTurn(row, col);
-    if(result === "already attacked") return;
+    // const result = game.playTurn(row, col);  //relaced with socket emit
+    // if(result === "already attacked") return;
+    socket.emit("attack", {row,col});
 
     //// Player vs Dumb Bot :( jsut for now
-    if (!game.winner && game.currentTurn === "player2") 
-    {
-      setTimeout(() => {
-        botAttack(row, col);
-      }, 500);
-    }
+    // if (!game.winner && game.currentTurn === "player2") 
+    // {
+    //   setTimeout(() => {
+    //     botAttack(row, col);
+    //   }, 500);
+    // }
 
-    forceRender(n => n + 1); // just triggers re-render
+    // forceRender(n => n + 1); // just triggers re-render
     // ^ edge case like: "hit" followed by another "hit" where setLastResult(result) the second time does nothing as react renders when state changes not to any change in variables
     console.log(`AFTER : ${game.status}`)
   };

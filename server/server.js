@@ -75,7 +75,8 @@ io.on("connection", (socket) => {
 
   // Create room
   socket.on("create-room", ({ playerName }) => {
-    const roomId = generateRoomId();
+    // const roomId = generateRoomId();
+    const roomId = "TEST321";
     rooms[roomId] = {
       players: [playerName],
       createdAt_ms: Date.now(),
@@ -91,6 +92,50 @@ io.on("connection", (socket) => {
     console.log(`${playerName} joined room ${roomId}`);
   })
 
+  // attack event
+  socket.on("attack", ({row,col}) => {
+    const roomId = socket.roomId;
+    const playerName = socket.playerName;
+    //missing metadata edge case
+    if(!roomId || !playerName){ 
+      return console.log("missing socket metadata");
+    }
+    //room doesnt exist
+    if(!rooms[roomId]){ 
+      console.log("room missing");
+      return;
+    }
+    //player belong to same room?
+    if(!rooms[roomId].players.includes(playerName)){  
+      console.log("invalid player");
+      return;
+    }
+    //game over? validation
+    if(rooms[roomId].game.winner){
+      console.log("game already over");
+      return;
+    }
+    //validate row/col
+    if(row === undefined || col === undefined){
+      console.log("invalid coords");
+      return;
+    }
+    console.log(`${playerName} attacking (${row},${col})`);
+    const game = rooms[roomId].game;
+    const result = game.playTurn(row,col);
+    const payload = { //broadcast all info at once for frontend to update
+      row,
+      col,
+      result,
+      currentTurn: game.currentTurn,
+      status: game.status,
+      winner: game.winner
+    };
+    io.to(roomId).emit("attack-result", payload);
+    console.log("result: ", result);
+    console.log("status: ", game.status);
+    console.log("payload: ", payload);
+  })
 });
 
 //server memory to store game data

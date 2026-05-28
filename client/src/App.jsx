@@ -16,6 +16,9 @@ function App() {
   useEffect(() => {
     socket.on("connect", () => {
       console.log(`client ${socket.id} connected to server`);
+      return ()=>{  //avoid duplicate listener
+        socket.off("connect");
+      };
     });
 
     //create-room
@@ -30,19 +33,42 @@ function App() {
     // response to new room creation 
     socket.on("room-created",({roomId, playerName})=>{
       console.log("created:", roomId);
-    console.log(`${playerName} joined room ${roomId}`);
+      console.log(`${playerName} joined room ${roomId}`);
+      return ()=>{  //avoid duplicate listener
+        socket.off("room-created");
+      };
     });
     //response to a player joining 
     socket.on("player-joined", (data)=>{
       console.log(`${data.playerName} joined ${data.roomId}`);
+      return ()=>{  //avoid duplicate listener
+        socket.off("player-joined");
+      };
     });
     //respnse to disconnected player
-    socket.on(
-      "player-disconnected",
-      (data) => {
-        console.log(`${data.playerName} disconnected from ${data.roomId}`);
-      }
-    );
+    socket.on("player-disconnected",(data) => {
+      console.log(`${data.playerName} disconnected from ${data.roomId}`);
+      return ()=>{  //avoid duplicate listener
+        socket.off("player-disconnected");
+      };
+    });
+    //resp to receiving game-result
+    socket.on("attack-result", (data) => {
+      console.log("ATTACK RESULT:",data);
+      return ()=>{  //avoid duplicate listener
+        socket.off("attack-result");
+      };
+    })
+
+    ////TESTING CODE
+    // socket.emit("create-room", {
+    //   playerName: "Host"
+    // })
+    // socket.emit("join-room", {
+    //   roomId: "F45Q",
+    //   playerName: "Player2"
+    // })
+
   }, []);
 
   return <GameScreen/>; 
