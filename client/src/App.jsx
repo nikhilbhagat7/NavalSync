@@ -9,21 +9,40 @@ import './App.css';
 import socket from "./socket";
 import { useEffect } from "react";
 
+window.socket = socket; //for testing through browser console
+
 function App() {
 
   useEffect(() => {
     socket.on("connect", () => {
       console.log(`client ${socket.id} connected to server`);
     });
-    //send res
-    socket.emit("hello-server", {
-      user: "Nikhil",
-      text: "hi backend"
+
+    //create-room
+    // socket.emit("create-room");
+
+    //join-room
+    // socket.emit("join-room",{
+    //   roomId:"AB12",
+    //   playerName:"Name_Joiner"
+    // });]
+
+    // response to new room creation 
+    socket.on("room-created",({roomId, playerName})=>{
+      console.log("created:", roomId);
+    console.log(`${playerName} joined room ${roomId}`);
     });
-    //rec res
-    socket.on("welcome-client", (data) => {
-      console.log("backend replied:", data);
+    //response to a player joining 
+    socket.on("player-joined", (data)=>{
+      console.log(`${data.playerName} joined ${data.roomId}`);
     });
+    //respnse to disconnected player
+    socket.on(
+      "player-disconnected",
+      (data) => {
+        console.log(`${data.playerName} disconnected from ${data.roomId}`);
+      }
+    );
   }, []);
 
   return <GameScreen/>; 

@@ -15,19 +15,80 @@ const io = new Server(server, {
 });
 
 io.on("connection", (socket) => {
+
   // on connection
   console.log("New socket connected : ", socket.id);
+
   // when disconenct
   socket.on("disconnect", ()=>{
     console.log("socket disconnected:", socket.id);
-  });
-  // receive data from frontend
-  socket.on("hello-server", (data) => {
-    console.log("hello from frontend:", data);
+    //get the meta data of socket
+    const roomId = socket.roomId;
+    const playerName = socket.playerName;
+    //for already del room
+    if(!rooms[roomId])
+      return;
+    //is not then remove it
+    if(rooms[roomId]){
+      rooms[roomId].players = rooms[roomId].players.filter(
+        player => player !== playerName
+      );
 
-    socket.emit("welcome-client", {
-      message: "hello from backend"
-    })
+      io.to(roomId).emit(
+        "player-disconnected",
+        {
+          playerName,
+          roomId
+        }
+      );
+    }
+    console.log(rooms[roomId]); //for debugging
+  });
+
+  // Join room
+  socket.on("join-room", ({roomId, playerName}) => {
+    if(!rooms[roomId]){  //room exists?
+      return socket.emit(
+        "join-error",
+        "room not found"
+      );
+    }
+    if(rooms[roomId].players.length >= 2){ // full? 0 and 1 filled
+      return socket.emit(
+        "join-error",
+        "room-full"
+      );
+    }
+    rooms[roomId].players.push(playerName);
+    socket.join(roomId);
+    console.log(`${playerName} joined room ${roomId}`);
+    io.to(roomId).emit(
+      "player-joined",{
+        playerName,
+        roomId
+      }
+    );
+    //meta data
+    socket.roomId = roomId;
+    socket.playerName = playerName;
+  })
+
+  // Create room
+  socket.on("create-room", ({ playerName }) => {
+    const roomId = generateRoomId();
+    rooms[roomId] = {
+      players: [playerName],
+      createdAt_ms: Date.now(),
+      game: createGame()
+    };
+    socket.join(roomId);
+    //meta data
+    socket.roomId = roomId;
+    socket.playerName = playerName;
+    //testung
+    console.log(`${socket.id} created room ${roomId}`);
+    socket.emit("room-created", {roomId, playerName});
+    console.log(`${playerName} joined room ${roomId}`);
   })
 
 });
