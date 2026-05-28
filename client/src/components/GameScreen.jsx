@@ -3,22 +3,67 @@ import StatusBar from "./StatusBar";
 import BoardGrid from "./BoardGrid";
 import ChatPanel from "./ChatPanel";
 import createGame from "../game/gameManager";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import socket from "../socket";
 
-const GameScreen = () => {
+const GameScreen = ({myRole}) => {
 
   const [game] = useState(() => createGame());
 
-  const playerBoard = game.player1.board;
-  const opponentBoard = game.player2.board;
+  const [serverGame,setServerGame] = useState(null);
+  useEffect(() => {
+    socket.on("attack-result", (data) => {
+      console.log(data);
+      setServerGame(data);
+    });
+    //game over handling
+    socket.on("game-over", (data)=>{
+        console.log("GAME OVER:", data);
+      }
+    );
+    return () => {
+      socket.off("attack-result");
+      socket.off("game-over");
+    };
+  }, []);
+
+  const myTurn = serverGame?.currentTurn === myRole;
+  const playerBoard =
+    myRole === "player1"
+      ? serverGame?.player1board ||
+        game.player1.board
+      : serverGame?.player2board ||
+        game.player2.board;
+  const opponentBoard =
+    myRole === "player1"
+      ? serverGame?.player2board ||
+        game.player2.board
+      : serverGame?.player1board ||
+        game.player1.board;
+
+  // const playerBoard = game.player1.board;
+  // const opponentBoard = game.player2.board;
+  // const playerBoard = game.player1.board;
+  // const opponentBoard = game.player2.board;
 
   const [, forceRender] = useState(0);
   const handleAttack = (row, col, boardClicked) => {
-    console.log(`BEFORE : ${game.status}`)
+    console.log(`BEFORE : ${serverGame.status}`)
     if (game.winner) return;
-    if (game.currentTurn === "player1" && boardClicked !== "opponent") return;
-    if (game.currentTurn === "player2") return; 
+    if(serverGame?.winner)
+      return;
+    // if (game.currentTurn === "player1" && boardClicked !== "opponent") return;
+    // if (game.currentTurn === "player2") return; 
+    
+    //IMP EDGE CASE: handle spam clicks
+    if (boardClicked !== "opponent")
+      return;
+
+    const currentTurn =  serverGame?.currentTurn;
+    // serverGame to dodge
+    if (serverGame && currentTurn !== myRole)
+      return;
+
     // if (game.currentTurn === "player2" && boardClicked !== "player") return; //for Player vs Player
 
     // const result = game.playTurn(row, col);  //relaced with socket emit
@@ -35,7 +80,7 @@ const GameScreen = () => {
 
     // forceRender(n => n + 1); // just triggers re-render
     // ^ edge case like: "hit" followed by another "hit" where setLastResult(result) the second time does nothing as react renders when state changes not to any change in variables
-    console.log(`AFTER : ${game.status}`)
+    console.log(`AFTER : ${serverGame.status}`)
   };
 
   //basic bot to play agiant player
@@ -57,6 +102,14 @@ const GameScreen = () => {
     <>
       <Navbar />
       <StatusBar turn={game.currentTurn} status={game.status} winner={game.winner}/>
+      { serverGame?.winner && (
+          <div>
+            GAME OVER
+            <br/>
+            Winner:
+            {serverGame.winner}
+          </div>
+        )}
       <main style={{
           display: "flex",
           gap: "40px",
@@ -68,13 +121,13 @@ const GameScreen = () => {
             gap: "20px"
           }}>
           <BoardGrid 
-            title="OPPONENT BOARD - P1" 
+            title="OPPONENT BOARD" 
             board={opponentBoard} 
             onCellClick={(row,col)=>handleAttack(row,col,"opponent")}
             isOpponentBoard={true}
           />
           <BoardGrid 
-            title="PLAYER BOARD - P2" 
+            title="YOUR BOARD" 
             board={playerBoard} 
             onCellClick={(row,col)=>handleAttack(row,col,"player")}    // no bot
             isOpponentBoard={false}
@@ -82,6 +135,23 @@ const GameScreen = () => {
         </div>
         <ChatPanel />
       </main>
+
+      <div>
+       {serverGame && (
+        <div>
+          TURN: {serverGame.currentTurn}
+          STATUS: {serverGame.status}
+          RESULT: {serverGame.result} 
+          <br/>
+          ROLE: {myRole}
+          <br/>
+          {myTurn
+            ? "YOUR TURN"
+            : "OPPONENT TURN"}
+        </div>
+       )}
+      </div>
+
     </>
   )
 };

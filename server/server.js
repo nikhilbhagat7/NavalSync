@@ -62,15 +62,18 @@ io.on("connection", (socket) => {
     rooms[roomId].players.push(playerName);
     socket.join(roomId);
     console.log(`${playerName} joined room ${roomId}`);
+    //meta data
+    socket.role = "player2";  // Opponent/who joins the room
+    socket.roomId = roomId;
+    socket.playerName = playerName;
+    //emit
     io.to(roomId).emit(
       "player-joined",{
         playerName,
-        roomId
+        roomId,
+        role:socket.role
       }
     );
-    //meta data
-    socket.roomId = roomId;
-    socket.playerName = playerName;
   })
 
   // Create room
@@ -84,12 +87,21 @@ io.on("connection", (socket) => {
     };
     socket.join(roomId);
     //meta data
+    socket.role = "player1";  // Host/room creator
     socket.roomId = roomId;
     socket.playerName = playerName;
     //testung
     console.log(`${socket.id} created room ${roomId}`);
-    socket.emit("room-created", {roomId, playerName});
     console.log(`${playerName} joined room ${roomId}`);
+    //emit
+    socket.emit(
+      "room-created", 
+      {
+        roomId, 
+        playerName,
+        role:socket.role
+      }
+    );
   })
 
   // attack event
@@ -120,10 +132,12 @@ io.on("connection", (socket) => {
       console.log("invalid coords");
       return;
     }
-    console.log(`${playerName} attacking (${row},${col})`);
     const game = rooms[roomId].game;
     const result = game.playTurn(row,col);
+    // payload
     const payload = { //broadcast all info at once for frontend to update
+      player1board:game.player1.board,
+      player2board:game.player2.board,
       row,
       col,
       result,
@@ -132,6 +146,15 @@ io.on("connection", (socket) => {
       winner: game.winner
     };
     io.to(roomId).emit("attack-result", payload);
+    if(game.winner){
+      io.to(roomId).emit ( "game-over", {
+          winner: game.winner,
+          status: game.status
+        }
+      );
+    }
+    //for debugginh
+    console.log(`${playerName} attacking (${row},${col})`);
     console.log("result: ", result);
     console.log("status: ", game.status);
     console.log("payload: ", payload);
