@@ -1,8 +1,3 @@
-// import { attack, isGameOver } from "./game/attack";
-// import createBoard from "./game/board";
-// import randomPlaceShips from "./game/placement";
-// import ships from "./game/ships";
-// import printBoard from "./utils/printer"; 
 import createGame from "./game/gameManager";
 import GameScreen from "./components/GameScreen"
 import './App.css';
@@ -16,21 +11,13 @@ function App() {
   const [myRole, setMyRole] = useState(null);
 
   useEffect(() => {
+    // response to socket connection
     socket.on("connect", () => {
       console.log(`client ${socket.id} connected to server`);
       return ()=>{  //avoid duplicate listener
         socket.off("connect");
       };
     });
-
-    //create-room
-    // socket.emit("create-room");
-
-    //join-room
-    // socket.emit("join-room",{
-    //   roomId:"AB12",
-    //   playerName:"Name_Joiner"
-    // });]
 
     // response to new room creation 
     socket.on("room-created",(data)=>{
@@ -43,6 +30,7 @@ function App() {
         socket.off("room-created");
       };
     });
+
     //response to a player joining 
     socket.on("player-joined", (data)=>{
       console.log(
@@ -61,7 +49,13 @@ function App() {
         socket.off("player-joined");
       };
     });
-    //respnse to disconnected player
+
+    //response to game start - broadcase it
+    socket.on("game-start",(data)=>{
+      console.log(data.status);
+    });
+
+    //respnse to disconnected socket
     socket.on("player-disconnected",(data) => {
       console.log(`${data.playerName} disconnected from ${data.roomId}`);
       return ()=>{  //avoid duplicate listener
@@ -77,15 +71,6 @@ function App() {
     //   };
     // })
 
-    ////TESTING CODE
-    // socket.emit("create-room", {
-    //   playerName: "Host"
-    // })
-    // socket.emit("join-room", {
-    //   roomId: "F45Q",
-    //   playerName: "Player2"
-    // })
-
   }, []);
 
   return <GameScreen myRole={myRole}/>
@@ -93,3 +78,13 @@ function App() {
 }
 
 export default App;
+
+
+////TESTING CODE
+// socket.emit("create-room", {
+//   playerName: "Host"
+// })
+// socket.emit("join-room", {
+//   roomId: "F45Q",
+//   playerName: "Player2"
+// })

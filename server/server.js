@@ -60,18 +60,27 @@ io.on("connection", (socket) => {
       );
     }
     rooms[roomId].players.push(playerName);
+    rooms[roomId].gameStarted = true; //declare the game has started and players free to click now
     socket.join(roomId);
     console.log(`${playerName} joined room ${roomId}`);
     //meta data
     socket.role = "player2";  // Opponent/who joins the room
     socket.roomId = roomId;
     socket.playerName = playerName;
-    //emit
+    //emit player-joined
     io.to(roomId).emit(
       "player-joined",{
         playerName,
         roomId,
         role:socket.role
+      }
+    );
+    //emit game-start
+    io.to(roomId).emit(
+      "game-start",
+      {
+        roomId,
+        status:"game started"
       }
     );
   })
@@ -83,7 +92,8 @@ io.on("connection", (socket) => {
     rooms[roomId] = {
       players: [playerName],
       createdAt_ms: Date.now(),
-      game: createGame()
+      game: createGame(),
+      gameStarted:false //helps in blocking clicks before game actually starts
     };
     socket.join(roomId);
     //meta data
@@ -108,6 +118,7 @@ io.on("connection", (socket) => {
   socket.on("attack", ({row,col}) => {
     const roomId = socket.roomId;
     const playerName = socket.playerName;
+    const role = socket.role;
     //missing metadata edge case
     if(!roomId || !playerName){ 
       return console.log("missing socket metadata");
@@ -115,6 +126,17 @@ io.on("connection", (socket) => {
     //room doesnt exist
     if(!rooms[roomId]){ 
       console.log("room missing");
+      return;
+    }
+    //block attack before start
+    if(!rooms[roomId].gameStarted){
+      console.log("game not started");
+      return;
+    }
+    //handle wrong player moves (spam clicking)
+    const game = rooms[roomId].game;
+    if(role !== game.currentTurn){
+      console.log("wrong player turn");
       return;
     }
     //player belong to same room?
@@ -132,7 +154,6 @@ io.on("connection", (socket) => {
       console.log("invalid coords");
       return;
     }
-    const game = rooms[roomId].game;
     const result = game.playTurn(row,col);
     // payload
     const payload = { //broadcast all info at once for frontend to update

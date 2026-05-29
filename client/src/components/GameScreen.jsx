@@ -27,33 +27,34 @@ const GameScreen = ({myRole}) => {
     };
   }, []);
 
-  const myTurn = serverGame?.currentTurn === myRole;
+  //Handle initial server component's null handling
+  let renderGame;
+  if(serverGame)
+    renderGame = serverGame
+  else{
+    renderGame = {
+      currentTurn: null,
+      status: "waiting..",
+      winner: null,
+      player1board: game.player1.board, //dummy board
+      player2board: game.player2.board  //dummy board
+    };
+  }
+
+  const myTurn = renderGame.currentTurn === myRole;
   const playerBoard =
     myRole === "player1"
-      ? serverGame?.player1board ||
-        game.player1.board
-      : serverGame?.player2board ||
-        game.player2.board;
+      ? renderGame.player1board
+      : renderGame.player2board;
   const opponentBoard =
     myRole === "player1"
-      ? serverGame?.player2board ||
-        game.player2.board
-      : serverGame?.player1board ||
-        game.player1.board;
+      ? renderGame.player2board
+      : renderGame.player1board;
 
-  // const playerBoard = game.player1.board;
-  // const opponentBoard = game.player2.board;
-  // const playerBoard = game.player1.board;
-  // const opponentBoard = game.player2.board;
-
-  const [, forceRender] = useState(0);
+  // handle attacks
   const handleAttack = (row, col, boardClicked) => {
-    console.log(`BEFORE : ${serverGame.status}`)
-    if (game.winner) return;
     if(serverGame?.winner)
       return;
-    // if (game.currentTurn === "player1" && boardClicked !== "opponent") return;
-    // if (game.currentTurn === "player2") return; 
     
     //IMP EDGE CASE: handle spam clicks
     if (boardClicked !== "opponent")
@@ -64,50 +65,23 @@ const GameScreen = ({myRole}) => {
     if (serverGame && currentTurn !== myRole)
       return;
 
-    // if (game.currentTurn === "player2" && boardClicked !== "player") return; //for Player vs Player
-
-    // const result = game.playTurn(row, col);  //relaced with socket emit
-    // if(result === "already attacked") return;
     socket.emit("attack", {row,col});
-
-    //// Player vs Dumb Bot :( jsut for now
-    // if (!game.winner && game.currentTurn === "player2") 
-    // {
-    //   setTimeout(() => {
-    //     botAttack(row, col);
-    //   }, 500);
-    // }
-
-    // forceRender(n => n + 1); // just triggers re-render
-    // ^ edge case like: "hit" followed by another "hit" where setLastResult(result) the second time does nothing as react renders when state changes not to any change in variables
-    console.log(`AFTER : ${serverGame.status}`)
   };
-
-  //basic bot to play agiant player
-  const botAttack = (row, col) => {
-    if (game.winner) return;
-
-    let result = "already attacked";
-    while(result === "already attacked"){
-      const row = Math.floor(Math.random() * 10);
-      const col = Math.floor(Math.random() * 10);
-      result = game.playTurn(row, col);
-    }
-
-    forceRender(n => n+1);// just triggers re-render
-    console.log(`BOT MAKES MOVE`);
-  }
 
   return(
     <>
       <Navbar />
-      <StatusBar turn={game.currentTurn} status={game.status} winner={game.winner}/>
-      { serverGame?.winner && (
+      <StatusBar 
+        turn={renderGame.currentTurn} 
+        status={renderGame.status} 
+        winner={renderGame.winner}
+      />
+      { renderGame?.winner && (
           <div>
             GAME OVER
             <br/>
             Winner:
-            {serverGame.winner}
+            {renderGame.winner}
           </div>
         )}
       <main style={{
@@ -137,11 +111,11 @@ const GameScreen = ({myRole}) => {
       </main>
 
       <div>
-       {serverGame && (
+       {renderGame && (
         <div>
-          TURN: {serverGame.currentTurn}
-          STATUS: {serverGame.status}
-          RESULT: {serverGame.result} 
+          TURN: {renderGame.currentTurn}
+          STATUS: {renderGame.status}
+          RESULT: {renderGame.result} 
           <br/>
           ROLE: {myRole}
           <br/>
