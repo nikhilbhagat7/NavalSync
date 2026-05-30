@@ -2,9 +2,25 @@ const express  = require("express");
 const createGame = require("../client/src/game/gameManager.js").default;
 const http = require("http");
 const {Server} = require("socket.io");
+const mongoose = require("mongoose");
+const GameHistory = require("./models/GameHistory");
+const cors = require('cors');
+
+mongoose.connect("mongodb://127.0.0.1:27017/navalsync")
+.then(()=>{
+  console.log(
+    "MongoDB connected"
+  );
+})
+.catch((err)=>{
+  console.log(err);
+});
 
 const app = express();
 const PORT = 3000;
+
+app.use(cors({origin:"http://localhost:5173"}));
+app.use(express.json());
 
 const server = http.createServer(app);
 const io = new Server(server, {
@@ -115,7 +131,7 @@ io.on("connection", (socket) => {
   })
 
   // attack event
-  socket.on("attack", ({row,col}) => {
+  socket.on("attack", async({row,col}) => {
     const roomId = socket.roomId;
     const playerName = socket.playerName;
     const role = socket.role;
@@ -168,6 +184,14 @@ io.on("connection", (socket) => {
     };
     io.to(roomId).emit("attack-result", payload);
     if(game.winner){
+      //Save match history - mongoDB
+      const match = new GameHistory({
+        players: rooms[roomId].players,
+        winner: game.winner
+      });
+      await match.save();
+      console.log("match saved");
+      //emit game-over
       io.to(roomId).emit ( "game-over", {
           winner: game.winner,
           status: game.status
@@ -269,6 +293,19 @@ app.get("/health", (req,res) => {
   res.json({
     status: "server alive :)"
   });
+});
+
+// match history MONGO DB json API
+app.get("/history", async(req,res)=>{
+  try{
+    const history = await GameHistory.find().sort({playedAt:-1});
+    res.json(history);
+  }
+  catch(err){
+    res.status(500).json({
+      error:"failed to fetch history"
+    });
+  }
 });
 
 server.listen(PORT, () => {

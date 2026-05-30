@@ -3,6 +3,7 @@ import GameScreen from "./components/GameScreen"
 import './App.css';
 import socket from "./socket";
 import { useEffect, useState } from "react";
+import HistoryPage from "./components/HistoryPage"
 
 window.socket = socket; //for testing through browser console
 
@@ -73,8 +74,8 @@ function App() {
 
   }, []);
 
-  return <GameScreen myRole={myRole}/>
-
+  // return <GameScreen myRole={myRole}/>
+  return <HistoryPage/>
 }
 
 export default App;
