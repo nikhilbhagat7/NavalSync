@@ -74,8 +74,8 @@ function App() {
 
   }, []);
 
-  // return <GameScreen myRole={myRole}/>
-  return <HistoryPage/>
+  return <GameScreen myRole={myRole}/>
+  // return <HistoryPage/>
 }
 
 export default App;

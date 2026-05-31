@@ -38,18 +38,21 @@ io.on("connection", (socket) => {
   // when disconenct
   socket.on("disconnect", ()=>{
     console.log("socket disconnected:", socket.id);
+
     //get the meta data of socket
     const roomId = socket.roomId;
     const playerName = socket.playerName;
+    
     //for already del room
     if(!rooms[roomId])
       return;
-    //is not then remove it
+
+    //remove player from room who are not there
     if(rooms[roomId]){
       rooms[roomId].players = rooms[roomId].players.filter(
         player => player !== playerName
       );
-
+      
       io.to(roomId).emit(
         "player-disconnected",
         {
@@ -58,7 +61,28 @@ io.on("connection", (socket) => {
         }
       );
     }
-    console.log(rooms[roomId]); //for debugging
+    
+    //handle abandoned game
+    if(rooms[roomId].players.length === 0){
+      delete rooms[roomId];
+      console.log("room-deleted : game abandoned!");
+      return; 
+    }
+    //handle player leaving mid game
+    const game = rooms[roomId].game;
+    if( rooms[roomId].gameStarted && !game.winner){
+      if(socket.role === "player1")
+        game.winner = "player2";
+      else
+        game.winner = "player1";
+
+      game.status ="game over";
+      //emit game-over
+      io.to(roomId).emit("game-over",{
+          winner:game.winner,
+          status:"opponent disconnected"
+      });
+    }
   });
 
   // Join room
@@ -215,7 +239,6 @@ app.get("/ping", (req,res) => {
   });
 });
 
-app.use(express.json());
 app.post("/echo", (req,res) => {
   const data = req.body;
   res.json({
